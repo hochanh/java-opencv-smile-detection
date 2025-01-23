@@ -33,7 +33,7 @@ public class SmileDetection {
         }
 
         // Open webcam using OpenPnP
-        var webcam = new VideoCapture(1);
+        var webcam = new VideoCapture(0);
         if (!webcam.isOpened()) {
             System.out.println("Error: Cannot access webcam");
             return;
@@ -66,13 +66,21 @@ public class SmileDetection {
                 // Detect smiles in the face ROI
                 Mat faceROI = matFrame.submat(face);
                 MatOfRect smiles = new MatOfRect();
-                smileDetector.detectMultiScale(faceROI, smiles);
+                smileDetector.detectMultiScale(faceROI, smiles, 1.8, 20, 0, new Size(30, 30), new Size());
 
-                for (Rect smile : smiles.toArray()) {
+                // Retain only one smile (if multiple detected)
+                Rect[] smileArray = smiles.toArray();
+                if (smileArray.length > 0) {
+                    Rect smile = smileArray[0]; // Use the first detected smile
+                    Rect absoluteSmile = new Rect(
+                            face.x + smile.x,
+                            face.y + smile.y,
+                            smile.width,
+                            smile.height
+                    );
+
                     // Draw rectangle around the smile
-                    Point smileTL = new Point(face.x + smile.x, face.y + smile.y);
-                    Point smileBR = new Point(face.x + smile.x + smile.width, face.y + smile.y + smile.height);
-                    Imgproc.rectangle(matFrame, smileTL, smileBR, new Scalar(255, 0, 0), 2);
+                    Imgproc.rectangle(matFrame, absoluteSmile, new Scalar(255, 0, 0), 2);
                 }
             }
 
